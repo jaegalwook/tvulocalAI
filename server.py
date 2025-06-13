@@ -1,24 +1,24 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from crawler import crawl_press_release
+from crawler import get_government_news
 
 app = Flask(__name__)
 CORS(app)
 
-@app.route("/chat", methods=["POST"])
+@app.route('/chat', methods=['POST'])
 def chat():
-    data = request.get_json()
-    query = data.get("message", "")
     try:
-        user_message = request.json.get("message", "").strip()
-        if not user_message:
-            return jsonify({"answer": "질문이 비어 있습니다."})
+        data = request.get_json()
+        query = data.get("message", "").strip()
+        if not query:
+            return jsonify({"success": False, "message": "질문이 비어 있습니다."}), 400
 
-        # 크롤링 실행
-        result = crawl_press_release(user_message)
-        return jsonify({"answer": result})
+        results = get_government_news(query)
+        return jsonify({"success": True, "results": results})
+
     except Exception as e:
-        return jsonify({"answer": f"오류 발생: {str(e)}"}), 500
+        return jsonify({"success": False, "message": str(e)}), 500
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=10000)
+
