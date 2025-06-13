@@ -1,248 +1,67 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>정부 공모·지원금 통합검색</title>
-    <!-- Tailwind CSS CDN을 로드하여 스타일링을 적용합니다. -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts에서 Inter 폰트를 로드하여 일관된 타이포그래피를 제공합니다. -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-      /* body 전체에 Inter 폰트를 적용합니다. */
-      body {
-        font-family: 'Inter', sans-serif;
-      }
-    </style>
+  <meta charset="UTF-8" />
+  <title>AI 기반 정부 정보 요약</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
-<body>
-    <!-- React 앱이 마운트될 root 요소입니다. -->
-    <div id="root"></div>
+<body class="bg-gray-100 font-sans">
+  <div id="root" class="p-6"></div>
 
-    <!-- React 및 ReactDOM 라이브러리를 로드합니다. -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- 중요: JSX 코드를 브라우저에서 변환하기 위한 Babel 스탠드얼론 라이브러리를 로드합니다. -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel">
+    function App() {
+      const [loading, setLoading] = React.useState(false);
+      const [data, setData] = React.useState([]);
+      const [error, setError] = React.useState(null);
 
-    <!-- React 컴포넌트 코드와 앱을 렌더링하는 스크립트입니다. type="text/babel"이 중요합니다. -->
-    <script type="text/babel">
-        // Main App component for the government support search application
-        function App() {
-          // State for managing filter values (keyword, region, target)
-          const [filters, setFilters] = React.useState({
-            keyword: '',
-            region: '',
-            target: '',
+      const handleCrawl = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const res = await fetch('https://your-flask-api.onrender.com/crawl', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: 'https://www.korea.kr/news/pressReleaseList.do' }),
           });
-
-          // Dummy data for government announcements and support funds
-          // In a real application, this data would likely come from an API
-          const [data, setData] = React.useState([
-            {
-              title: '2025 청년 지원금 공고',
-              agency: '고용노동부',
-              date: '2025-06-01',
-              // Link changed to Google search for the title (dummy link)
-              link: 'https://www.google.com/search?q=2025 청년 지원금 공고 고용노동부',
-              region: '전국',
-              target: '청년',
-            },
-            {
-              title: '소상공인 긴급대출 안내',
-              agency: '중소벤처기업부',
-              date: '2025-06-03',
-              // Link changed to Google search for the title (dummy link)
-              link: 'https://www.google.com/search?q=소상공인 긴급대출 안내 중소벤처기업부',
-              region: '서울',
-              target: '소상공인',
-            },
-            {
-              title: 'IT 인재 양성 프로그램',
-              agency: '과학기술정보통신부',
-              date: '2025-05-20',
-              link: 'https://www.google.com/search?q=IT 인재 양성 프로그램 과학기술정보통신부',
-              region: '경기',
-              target: '청년',
-            },
-            {
-              title: '농어촌 주거 개선 사업',
-              agency: '농림축산식품부',
-              date: '2025-06-10',
-              link: 'https://www.google.com/search?q=농어촌 주거 개선 사업 농림축산식품부',
-              region: '충남',
-              target: '일반시민', // Added a new target for demonstration
-            },
-            {
-              title: '장애인 취업 지원 프로그램',
-              agency: '보건복지부',
-              date: '2025-06-05',
-              link: 'https://www.google.com/search?q=장애인 취업 지원 프로그램 보건복지부',
-              region: '전국',
-              target: '장애인', // Added a new target
-            },
-            {
-              title: '중소기업 R&D 지원사업',
-              agency: '중소벤처기업부',
-              date: '2025-06-15',
-              link: 'https://www.google.com/search?q=중소기업 R&D 지원사업 중소벤처기업부',
-              region: '전국',
-              target: '소상공인',
-            },
-            {
-              title: '여성 창업 지원금',
-              agency: '여성가족부',
-              date: '2025-07-01',
-              link: 'https://www.google.com/search?q=여성 창업 지원금 여성가족부',
-              region: '부산광역시',
-              target: '여성',
-            },
-            {
-              title: '고령층 디지털 교육 사업',
-              agency: '과학기술정보통신부',
-              date: '2025-06-20',
-              link: 'https://www.google.com/search?q=고령층 디지털 교육 사업 과학기술정보통신부',
-              region: '대구광역시',
-              target: '고령층',
-            },
-            {
-              title: '환경 개선 프로젝트 공모',
-              agency: '환경부',
-              date: '2025-07-10',
-              link: 'https://www.google.com/search?q=환경 개선 프로젝트 공모 환경부',
-              region: '광주광역시',
-              target: '모든 시민',
-            },
-          ]);
-
-          // Handler for input and select changes, updates the filter state
-          const handleChange = (e) => {
-            setFilters({ ...filters, [e.target.name]: e.target.value });
-          };
-
-          // Filters the data based on the current filter values
-          const filteredData = data.filter(item => {
-            // Check if keyword is empty or if item title includes the keyword
-            const matchesKeyword = !filters.keyword || item.title.includes(filters.keyword);
-            // Check if region is empty or if item region matches the selected region
-            const matchesRegion = !filters.region || item.region === filters.region;
-            // Check if target is empty or if item target matches the selected target
-            const matchesTarget = !filters.target || item.target === filters.target;
-
-            return matchesKeyword && matchesRegion && matchesTarget;
-          });
-
-          return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-              <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl">
-                <h1 className="text-3xl font-extrabold text-gray-900 mb-6 text-center">정부 공모·지원금 통합검색</h1>
-
-                {/* Filter section */}
-                <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {/* Keyword search input */}
-                  <input
-                    type="text"
-                    name="keyword"
-                    placeholder="키워드 검색"
-                    value={filters.keyword}
-                    onChange={handleChange}
-                    className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                  />
-                  {/* Region filter dropdown */}
-                  <select
-                    name="region"
-                    value={filters.region}
-                    onChange={handleChange}
-                    className="border border-gray-300 p-3 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                  >
-                    <option value="">지역 전체</option>
-                    <option value="전국">전국</option>
-                    <option value="서울특별시">서울특별시</option>
-                    <option value="부산광역시">부산광역시</option>
-                    <option value="대구광역시">대구광역시</option>
-                    <option value="인천광역시">인천광역시</option>
-                    <option value="광주광역시">광주광역시</option>
-                    <option value="대전광역시">대전광역시</option>
-                    <option value="울산광역시">울산광역시</option>
-                    <option value="세종특별자치시">세종특별자치시</option>
-                    <option value="경기도">경기도</option>
-                    <option value="강원특별자치도">강원특별자치도</option>
-                    <option value="충청북도">충청북도</option>
-                    <option value="충청남도">충청남도</option>
-                    <option value="전라북도">전라북도</option>
-                    <option value="전라남도">전라남도</option>
-                    <option value="경상북도">경상북도</option>
-                    <option value="경상남도">경상남도</option>
-                    <option value="제주특별자치도">제주특별자치도</option>
-                  </select>
-                  {/* Target filter dropdown */}
-                  <select
-                    name="target"
-                    value={filters.target}
-                    onChange={handleChange}
-                    className="border border-gray-300 p-3 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                  >
-                    <option value="">대상 전체</option>
-                    <option value="청년">청년</option>
-                    <option value="소상공인">소상공인</option>
-                    <option value="공무원">공무원</option>
-                    <option value="일반시민">일반시민</option>
-                    <option value="장애인">장애인</option>
-                    <option value="여성">여성</option>
-                    <option value="고령층">고령층</option>
-                    <option value="모든 시민">모든 시민</option>
-                    {/* Add more targets as needed */}
-                  </select>
-                </div>
-
-                {/* List of filtered data */}
-                <ul className="space-y-4">
-                  {filteredData.length > 0 ? (
-                    filteredData.map((item, index) => (
-                      <li key={index} className="border border-gray-200 rounded-lg p-5 bg-white shadow-md hover:shadow-lg transition duration-200">
-                        <h2 className="font-bold text-xl text-gray-800 mb-1">{item.title}</h2>
-                        <p className="text-sm text-gray-600">
-                          <span className="font-medium">기관:</span> {item.agency}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          <span className="font-medium">날짜:</span> {item.date}
-                        </p>
-                        <p className="text-sm text-gray-600 mb-3">
-                          <span className="font-medium">지역:</span> {item.region}, <span className="font-medium">대상:</span> {item.target}
-                        </p>
-                        <a
-                          href={item.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium transition duration-200"
-                        >
-                          바로가기
-                          {/* External link icon */}
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                        </a>
-                      </li>
-                    ))
-                  ) : (
-                    // Message when no search results are found
-                    <p className="text-center text-gray-500 text-lg py-10">검색 결과가 없습니다.</p>
-                  )}
-                </ul>
-              </div>
-            </div>
-          );
+          const result = await res.json();
+          if (result.success) {
+            setData(result.data);
+          } else {
+            setError(result.message);
+          }
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
         }
+      };
 
-        // ReactDOM을 사용하여 App 컴포넌트를 'root' 요소에 렌더링합니다.
-        const rootElement = document.getElementById('root');
-        if (rootElement) {
-          ReactDOM.createRoot(rootElement).render(
-            <React.StrictMode>
-              <App />
-            </React.StrictMode>
-          );
-        }
-    </script>
+      return (
+        <div className="max-w-3xl mx-auto bg-white p-6 rounded shadow">
+          <h1 className="text-2xl font-bold mb-4">정부 보도자료 AI 요약</h1>
+          <button onClick={handleCrawl} className="bg-blue-600 text-white px-4 py-2 rounded">
+            크롤링 + AI 요약
+          </button>
+          {loading && <p className="mt-4 text-gray-500">로딩 중...</p>}
+          {error && <p className="text-red-600 mt-4">{error}</p>}
+          <ul className="mt-6 space-y-4">
+            {data.map((item, idx) => (
+              <li key={idx} className="border p-4 rounded shadow">
+                <h2 className="font-semibold">{item.title}</h2>
+                <p className="text-sm text-gray-500">{item.date}</p>
+                <p className="mt-2">{item.summary}</p>
+                <a href={item.link} target="_blank" className="text-blue-600 mt-2 inline-block">원문보기</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
 </body>
 </html>
