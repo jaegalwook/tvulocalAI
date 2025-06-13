@@ -3,79 +3,65 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>정부 정책 AI 크롤링 챗봇</title>
+  <title>정부 AI 크롤링 챗봇</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center">
-  <div id="root" class="w-full max-w-2xl p-4"></div>
+<body class="bg-gray-50 font-sans">
+  <div id="root" class="max-w-3xl mx-auto mt-10 p-4 bg-white rounded shadow"></div>
 
   <script type="text/babel">
-    function App() {
-      const [messages, setMessages] = React.useState([]);
-      const [input, setInput] = React.useState("");
+    const App = () => {
+      const [question, setQuestion] = React.useState("");
+      const [answer, setAnswer] = React.useState("");
       const [loading, setLoading] = React.useState(false);
 
-      const handleSend = async () => {
-        if (!input.trim()) return;
-
-        const userMessage = { type: "user", text: input };
-        setMessages(prev => [...prev, userMessage]);
-        setInput("");
+      const handleAsk = async () => {
         setLoading(true);
-
+        setAnswer("");
         try {
-          const res = await fetch("https://tvulocalai-2.onrender.com/crawl", {
+          const res = await fetch("https://tvulocalai-2.onrender.com/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: input }),
+            body: JSON.stringify({ message: question })
           });
-
           const data = await res.json();
-          const botMessage = { type: "bot", text: data.answer || "결과가 없습니다." };
-          setMessages(prev => [...prev, botMessage]);
-        } catch (err) {
-          setMessages(prev => [...prev, { type: "bot", text: "❌ 서버 응답 오류" }]);
-        } finally {
-          setLoading(false);
+          setAnswer(data.answer);
+        } catch (e) {
+          setAnswer("서버와의 통신 중 오류가 발생했습니다.");
         }
+        setLoading(false);
       };
 
       return (
-        <div className="bg-white shadow-xl rounded-lg p-6 w-full">
-          <h1 className="text-2xl font-bold text-center mb-4">정부 정책·지원금 AI 크롤러</h1>
-          <div className="space-y-4 mb-4 max-h-96 overflow-y-auto">
-            {messages.map((msg, i) => (
-              <div key={i} className={`p-3 rounded-lg ${msg.type === "user" ? "bg-blue-100 text-right" : "bg-gray-100 text-left"}`}>
-                {msg.text}
-              </div>
-            ))}
-            {loading && <div className="text-gray-500 text-sm">크롤링 중...</div>}
-          </div>
-          <div className="flex space-x-2">
+        <div>
+          <h1 className="text-3xl font-bold mb-6 text-center text-blue-700">정부 정보 AI 크롤링 챗봇</h1>
+          <div className="flex gap-2">
             <input
-              className="flex-1 border border-gray-300 rounded-lg p-3"
               type="text"
-              placeholder="예: 청년 지원금 뭐 있어?"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              className="flex-1 border p-3 rounded text-lg"
+              placeholder="예: 행안부 보도자료 보여줘"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
             />
             <button
-              onClick={handleSend}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              onClick={handleAsk}
+              disabled={loading}
+              className="bg-blue-600 text-white px-4 py-3 rounded hover:bg-blue-700 disabled:opacity-50"
             >
-              전송
+              {loading ? "불러오는 중..." : "질문하기"}
             </button>
+          </div>
+          <div className="mt-6 whitespace-pre-line text-gray-800 text-sm bg-gray-100 p-4 rounded">
+            {answer}
           </div>
         </div>
       );
-    }
+    };
 
-    const root = document.getElementById("root");
-    ReactDOM.createRoot(root).render(<App />);
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
   </script>
 </body>
 </html>
