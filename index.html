@@ -2,66 +2,79 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>AI 기반 정부 정보 요약</title>
+  <title>정부 정보 통합 챗봇</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
-<body class="bg-gray-100 font-sans">
-  <div id="root" class="p-6"></div>
+<body class="bg-gray-100">
+  <div id="root"></div>
 
   <script type="text/babel">
-    function App() {
-      const [loading, setLoading] = React.useState(false);
-      const [data, setData] = React.useState([]);
-      const [error, setError] = React.useState(null);
+    const BACKEND_URL = "https://tvulocalai-2.onrender.com";
 
-      const handleCrawl = async () => {
+    function App() {
+      const [messages, setMessages] = React.useState([]);
+      const [input, setInput] = React.useState("");
+      const [loading, setLoading] = React.useState(false);
+
+      const handleSubmit = async () => {
+        if (!input.trim()) return;
+
+        const userMessage = { type: "user", text: input };
+        setMessages([...messages, userMessage]);
+        setInput("");
         setLoading(true);
-        setError(null);
+
         try {
-          const res = await fetch('https://your-flask-api.onrender.com/crawl', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: 'https://www.korea.kr/news/pressReleaseList.do' }),
+          const res = await fetch(BACKEND_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: input }),
           });
-          const result = await res.json();
-          if (result.success) {
-            setData(result.data);
-          } else {
-            setError(result.message);
-          }
+
+          const data = await res.json();
+          const botMessage = { type: "bot", text: data.response };
+          setMessages(prev => [...prev, botMessage]);
         } catch (err) {
-          setError(err.message);
+          setMessages(prev => [...prev, { type: "bot", text: "오류 발생: " + err.message }]);
         } finally {
           setLoading(false);
         }
       };
 
       return (
-        <div className="max-w-3xl mx-auto bg-white p-6 rounded shadow">
-          <h1 className="text-2xl font-bold mb-4">정부 보도자료 AI 요약</h1>
-          <button onClick={handleCrawl} className="bg-blue-600 text-white px-4 py-2 rounded">
-            크롤링 + AI 요약
-          </button>
-          {loading && <p className="mt-4 text-gray-500">로딩 중...</p>}
-          {error && <p className="text-red-600 mt-4">{error}</p>}
-          <ul className="mt-6 space-y-4">
-            {data.map((item, idx) => (
-              <li key={idx} className="border p-4 rounded shadow">
-                <h2 className="font-semibold">{item.title}</h2>
-                <p className="text-sm text-gray-500">{item.date}</p>
-                <p className="mt-2">{item.summary}</p>
-                <a href={item.link} target="_blank" className="text-blue-600 mt-2 inline-block">원문보기</a>
-              </li>
+        <div className="max-w-3xl mx-auto min-h-screen p-4 bg-white shadow-xl rounded-lg mt-10">
+          <h1 className="text-2xl font-bold text-center mb-6">정부 정책·보조금 챗봇</h1>
+
+          <div className="space-y-4 h-[60vh] overflow-y-auto border p-4 rounded bg-gray-50">
+            {messages.map((msg, idx) => (
+              <div key={idx} className={`text-sm ${msg.type === 'user' ? 'text-right text-blue-600' : 'text-left text-gray-800'}`}>
+                <p className="whitespace-pre-line">{msg.text}</p>
+              </div>
             ))}
-          </ul>
+            {loading && <p className="text-gray-400">GPT 응답 중...</p>}
+          </div>
+
+          <div className="flex gap-2 mt-4">
+            <input
+              type="text"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              placeholder="예: 이번달 부산 축제 뭐 있어?"
+              className="flex-grow border border-gray-300 rounded p-2"
+              onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+            />
+            <button onClick={handleSubmit} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+              전송
+            </button>
+          </div>
         </div>
       );
     }
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
   </script>
 </body>
 </html>
