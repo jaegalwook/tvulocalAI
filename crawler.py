@@ -1,46 +1,51 @@
-# backend/crawler.py
 import requests
 from bs4 import BeautifulSoup
 
-def crawl_government_data(user_message):
-    """
-    user_message에서 키워드를 추출하여 관련 정부 사이트에서 크롤링 수행
-    현재는 korea.kr 보도자료 목록에서 관련 키워드를 검색
-    """
-    base_url = "https://www.korea.kr/news/pressReleaseList.do"
-    search_url = f"https://www.korea.kr/news/pressReleaseList.do?searchWord={user_message}"
+# 부처명과 URL 매핑
+PRESS_URLS = {
+    "행안부": "https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardList.do?bbsId=BBSMSTR_000000000014",
+    "복지부": "https://www.mohw.go.kr/react/al/sal0301ls.jsp?PAR_MENU_ID=04&MENU_ID=0403",
+    "국토부": "https://www.molit.go.kr/USR/BORD0201/m_69/list.do?bbsId=BBSMSTR_000000000023",
+    "문체부": "https://www.mcst.go.kr/kor/s_notice/press/pressList.jsp",
+    "환경부": "https://www.me.go.kr/home/web/board/list.do?menuId=10392",
+}
+
+def extract_ministry_name(user_input):
+    for keyword in PRESS_URLS:
+        if keyword in user_input:
+            return keyword
+    return None
+
+def crawl_press_release(user_input):
+    ministry = extract_ministry_name(user_input)
+    if not ministry:
+        return "지원하는 부처명을 찾을 수 없습니다. 예: '행안부 보도자료 보여줘'"
+
+    url = PRESS_URLS[ministry]
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
 
     try:
-        response = requests.get(search_url, timeout=10)
-        response.raise_for_status()
+        res = requests.get(url, headers=headers)
+        res.raise_for_status()
+        soup = BeautifulSoup(res.text, "html.parser")
+
+        # 부처별 HTML 구조에 맞춰 커스터마이징 필요
+        # 여기서는 행안부(mois.go.kr) 구조 기준 예시
+        items = soup.select("table tbody tr")[:5]
+
+        results = []
+        for row in items:
+            title_tag = row.select_one("td.subject a")
+            date_tag = row.select_one("td.date")
+            if not title_tag:
+                continue
+            title = title_tag.text.strip()
+            link = "https://www.mois.go.kr" + title_tag.get("href")
+            date = date_tag.text.strip() if date_tag else "날짜 없음"
+            results.append(f"📌 {title}\n🕒 {date}\n🔗 {link}")
+
+        return "\n\n".join(results) if results else "보도자료를 찾을 수 없습니다."
     except Exception as e:
-        print("크롤링 요청 오류:", e)
-        return []
-
-    soup = BeautifulSoup(response.text, "html.parser")
-    items = []
-
-    # 보도자료 목록 가져오기
-    ul = soup.find("ul", class_="list type01")
-    if not ul:
-        return []
-
-    for li in ul.find_all("li")[:5]:  # 최대 5개 항목
-        try:
-            title_tag = li.find("a")
-            title = title_tag.get_text(strip=True)
-            link = "https://www.korea.kr" + title_tag["href"]
-            desc = li.find("p").get_text(strip=True)
-            date = li.find("span", class_="date").get_text(strip=True)
-
-            items.append({
-                "title": title,
-                "desc": desc,
-                "date": date,
-                "link": link
-            })
-        except Exception as e:
-            print("항목 파싱 실패:", e)
-            continue
-
-    return items
+        return f"크롤링 중 오류 발생: {str(e)}"
