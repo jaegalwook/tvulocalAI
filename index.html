@@ -53,10 +53,10 @@
       responseArea.innerHTML = `<p class="text-sm text-gray-500">답변을 불러오는 중입니다...</p>`;
 
       try {
-        const res = await fetch(`${BACKEND_URL}/chat`, {
+        const res = await fetch("https://tvulocalai-2.onrender.com/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message }),
+          body: JSON.stringify({ message: input }),
         });
 
         if (!res.ok) throw new Error(`서버 응답 오류: ${res.status}`);
