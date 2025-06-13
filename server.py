@@ -7,6 +7,8 @@ CORS(app)
 
 @app.route("/chat", methods=["POST"])
 def chat():
+    data = request.get_json()
+    query = data.get("message", "")
     try:
         user_message = request.json.get("message", "").strip()
         if not user_message:
