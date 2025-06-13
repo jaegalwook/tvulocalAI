@@ -43,7 +43,8 @@
               title: '2025 청년 지원금 공고',
               agency: '고용노동부',
               date: '2025-06-01',
-              link: 'https://www.moel.go.kr/news/notice/123',
+              // Link changed to Google search for the title (dummy link)
+              link: 'https://www.google.com/search?q=2025 청년 지원금 공고 고용노동부',
               region: '전국',
               target: '청년',
             },
@@ -51,7 +52,8 @@
               title: '소상공인 긴급대출 안내',
               agency: '중소벤처기업부',
               date: '2025-06-03',
-              link: 'https://www.mss.go.kr/support/loan',
+              // Link changed to Google search for the title (dummy link)
+              link: 'https://www.google.com/search?q=소상공인 긴급대출 안내 중소벤처기업부',
               region: '서울',
               target: '소상공인',
             },
@@ -59,7 +61,7 @@
               title: 'IT 인재 양성 프로그램',
               agency: '과학기술정보통신부',
               date: '2025-05-20',
-              link: 'https://www.msit.go.kr/program/it',
+              link: 'https://www.google.com/search?q=IT 인재 양성 프로그램 과학기술정보통신부',
               region: '경기',
               target: '청년',
             },
@@ -67,7 +69,7 @@
               title: '농어촌 주거 개선 사업',
               agency: '농림축산식품부',
               date: '2025-06-10',
-              link: 'https://www.mafra.go.kr/housing/improve',
+              link: 'https://www.google.com/search?q=농어촌 주거 개선 사업 농림축산식품부',
               region: '충남',
               target: '일반시민', // Added a new target for demonstration
             },
@@ -75,7 +77,7 @@
               title: '장애인 취업 지원 프로그램',
               agency: '보건복지부',
               date: '2025-06-05',
-              link: 'https://www.mohw.go.kr/welfare/disabled',
+              link: 'https://www.google.com/search?q=장애인 취업 지원 프로그램 보건복지부',
               region: '전국',
               target: '장애인', // Added a new target
             },
@@ -83,9 +85,33 @@
               title: '중소기업 R&D 지원사업',
               agency: '중소벤처기업부',
               date: '2025-06-15',
-              link: 'https://www.mss.go.kr/rnd/support',
+              link: 'https://www.google.com/search?q=중소기업 R&D 지원사업 중소벤처기업부',
               region: '전국',
               target: '소상공인',
+            },
+            {
+              title: '여성 창업 지원금',
+              agency: '여성가족부',
+              date: '2025-07-01',
+              link: 'https://www.google.com/search?q=여성 창업 지원금 여성가족부',
+              region: '부산광역시',
+              target: '여성',
+            },
+            {
+              title: '고령층 디지털 교육 사업',
+              agency: '과학기술정보통신부',
+              date: '2025-06-20',
+              link: 'https://www.google.com/search?q=고령층 디지털 교육 사업 과학기술정보통신부',
+              region: '대구광역시',
+              target: '고령층',
+            },
+            {
+              title: '환경 개선 프로젝트 공모',
+              agency: '환경부',
+              date: '2025-07-10',
+              link: 'https://www.google.com/search?q=환경 개선 프로젝트 공모 환경부',
+              region: '광주광역시',
+              target: '모든 시민',
             },
           ]);
 
@@ -131,10 +157,23 @@
                   >
                     <option value="">지역 전체</option>
                     <option value="전국">전국</option>
-                    <option value="서울">서울</option>
-                    <option value="경기">경기</option>
-                    <option value="충남">충남</option>
-                    {/* Add more regions as needed */}
+                    <option value="서울특별시">서울특별시</option>
+                    <option value="부산광역시">부산광역시</option>
+                    <option value="대구광역시">대구광역시</option>
+                    <option value="인천광역시">인천광역시</option>
+                    <option value="광주광역시">광주광역시</option>
+                    <option value="대전광역시">대전광역시</option>
+                    <option value="울산광역시">울산광역시</option>
+                    <option value="세종특별자치시">세종특별자치시</option>
+                    <option value="경기도">경기도</option>
+                    <option value="강원특별자치도">강원특별자치도</option>
+                    <option value="충청북도">충청북도</option>
+                    <option value="충청남도">충청남도</option>
+                    <option value="전라북도">전라북도</option>
+                    <option value="전라남도">전라남도</option>
+                    <option value="경상북도">경상북도</option>
+                    <option value="경상남도">경상남도</option>
+                    <option value="제주특별자치도">제주특별자치도</option>
                   </select>
                   {/* Target filter dropdown */}
                   <select
@@ -149,6 +188,9 @@
                     <option value="공무원">공무원</option>
                     <option value="일반시민">일반시민</option>
                     <option value="장애인">장애인</option>
+                    <option value="여성">여성</option>
+                    <option value="고령층">고령층</option>
+                    <option value="모든 시민">모든 시민</option>
                     {/* Add more targets as needed */}
                   </select>
                 </div>
@@ -204,4 +246,3 @@
     </script>
 </body>
 </html>
-
