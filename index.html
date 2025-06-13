@@ -2,71 +2,77 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>정부 정보 통합 챗봇</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>정부 정보 챗봇</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body class="bg-gray-100">
-  <div id="root"></div>
+  <div id="root" class="min-h-screen p-4"></div>
 
   <script type="text/babel">
-    const BACKEND_URL = "https://tvulocalai-2.onrender.com";
+    const { useState } = React;
 
     function App() {
-      const [messages, setMessages] = React.useState([]);
-      const [input, setInput] = React.useState("");
-      const [loading, setLoading] = React.useState(false);
+      const [input, setInput] = useState("");
+      const [messages, setMessages] = useState([]);
 
-      const handleSubmit = async () => {
+      const sendMessage = async () => {
         if (!input.trim()) return;
 
-        const userMessage = { type: "user", text: input };
-        setMessages([...messages, userMessage]);
-        setInput("");
-        setLoading(true);
+        setMessages(prev => [...prev, { type: "user", text: input }]);
 
         try {
-          const res = await fetch(BACKEND_URL, {
+          const res = await fetch("https://tvulocalai-2.onrender.com/crawl", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: input }),
+            body: JSON.stringify({ url: input }) // <-- 올바른 키 사용
           });
-
           const data = await res.json();
-          const botMessage = { type: "bot", text: data.response };
-          setMessages(prev => [...prev, botMessage]);
-        } catch (err) {
-          setMessages(prev => [...prev, { type: "bot", text: "오류 발생: " + err.message }]);
-        } finally {
-          setLoading(false);
+
+          if (data.success && Array.isArray(data.data)) {
+            const formatted = data.data.map(
+              item => `📌 ${item.제목}\n📅 ${item.날짜}\n🔗 ${item.링크}`
+            ).join("\n\n");
+
+            setMessages(prev => [...prev, { type: "bot", text: formatted }]);
+          } else {
+            setMessages(prev => [...prev, { type: "bot", text: "❌ 유효한 데이터를 찾을 수 없습니다." }]);
+          }
+        } catch (e) {
+          setMessages(prev => [...prev, { type: "bot", text: "❗ 서버 응답 오류: " + e.message }]);
         }
+
+        setInput("");
       };
 
       return (
-        <div className="max-w-3xl mx-auto min-h-screen p-4 bg-white shadow-xl rounded-lg mt-10">
-          <h1 className="text-2xl font-bold text-center mb-6">정부 정책·보조금 챗봇</h1>
-
-          <div className="space-y-4 h-[60vh] overflow-y-auto border p-4 rounded bg-gray-50">
+        <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-lg p-6">
+          <h1 className="text-2xl font-bold text-center text-indigo-600 mb-4">정부 공모·보도자료 챗봇</h1>
+          
+          <div className="h-96 overflow-y-auto border p-4 mb-4 space-y-3 bg-gray-50 rounded">
             {messages.map((msg, idx) => (
-              <div key={idx} className={`text-sm ${msg.type === 'user' ? 'text-right text-blue-600' : 'text-left text-gray-800'}`}>
-                <p className="whitespace-pre-line">{msg.text}</p>
+              <div key={idx} className={`whitespace-pre-wrap p-3 rounded ${msg.type === "user" ? "bg-blue-100 text-right" : "bg-gray-100 text-left"}`}>
+                {msg.text}
               </div>
             ))}
-            {loading && <p className="text-gray-400">GPT 응답 중...</p>}
           </div>
 
-          <div className="flex gap-2 mt-4">
+          <div className="flex gap-2">
             <input
               type="text"
+              placeholder="크롤링할 URL 입력"
+              className="flex-1 border border-gray-300 p-3 rounded"
               value={input}
-              onChange={e => setInput(e.target.value)}
-              placeholder="예: 이번달 부산 축제 뭐 있어?"
-              className="flex-grow border border-gray-300 rounded p-2"
-              onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             />
-            <button onClick={handleSubmit} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            <button
+              className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+              onClick={sendMessage}
+            >
               전송
             </button>
           </div>
