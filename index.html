@@ -3,65 +3,88 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>정부 AI 크롤링 챗봇</title>
+  <title>정부 정보 검색 챗봇</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
 </head>
-<body class="bg-gray-50 font-sans">
-  <div id="root" class="max-w-3xl mx-auto mt-10 p-4 bg-white rounded shadow"></div>
+<body class="bg-gray-100 text-gray-900">
+  <div class="max-w-3xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-4 text-center">정부 보도자료·지원금 챗봇</h1>
 
-  <script type="text/babel">
-    const App = () => {
-      const [question, setQuestion] = React.useState("");
-      const [answer, setAnswer] = React.useState("");
-      const [loading, setLoading] = React.useState(false);
+    <!-- 사용자 질문 입력 -->
+    <div class="mb-4">
+      <input
+        id="userInput"
+        type="text"
+        placeholder="예: 행안부 보도자료 보여줘"
+        class="w-full p-3 border border-gray-300 rounded-lg shadow-sm"
+      />
+    </div>
+    <div class="mb-6 text-center">
+      <button
+        onclick="sendMessage()"
+        class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+      >
+        질문하기
+      </button>
+    </div>
 
-      const handleAsk = async () => {
-        setLoading(true);
-        setAnswer("");
-        try {
-          const res = await fetch("https://tvulocalai-2.onrender.com/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: question })
-          });
-          const data = await res.json();
-          setAnswer(data.answer);
-        } catch (e) {
-          setAnswer("서버와의 통신 중 오류가 발생했습니다.");
+    <!-- 응답 결과 출력 영역 -->
+    <div id="responseArea" class="space-y-4"></div>
+  </div>
+
+  <script>
+    const BACKEND_URL = "https://tvulocalai-2.onrender.com";
+
+    async function sendMessage() {
+      const input = document.getElementById("userInput");
+      const message = input.value.trim();
+      const responseArea = document.getElementById("responseArea");
+
+      if (!message) {
+        alert("질문을 입력해주세요.");
+        return;
+      }
+
+      responseArea.innerHTML = `<p class="text-sm text-gray-500">답변을 불러오는 중입니다...</p>`;
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message }),
+        });
+
+        if (!res.ok) throw new Error(`서버 응답 오류: ${res.status}`);
+
+        const data = await res.json();
+
+        if (data.success && Array.isArray(data.results)) {
+          if (data.results.length === 0) {
+            responseArea.innerHTML = `<p class="text-red-500">검색 결과가 없습니다.</p>`;
+            return;
+          }
+
+          responseArea.innerHTML = data.results
+            .map(item => `
+              <div class="bg-white p-4 rounded-lg shadow border">
+                <h2 class="text-lg font-bold">${item.title}</h2>
+                <p class="text-sm text-gray-500">${item.date}</p>
+                <a href="${item.link}" target="_blank" class="text-blue-600 hover:underline text-sm">🔗 링크 바로가기</a>
+              </div>
+            `).join("");
+        } else {
+          responseArea.innerHTML = `<p class="text-red-500">오류: ${data.message || "결과를 불러올 수 없습니다."}</p>`;
         }
-        setLoading(false);
-      };
-
-      return (
-        <div>
-          <h1 className="text-3xl font-bold mb-6 text-center text-blue-700">정부 정보 AI 크롤링 챗봇</h1>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              className="flex-1 border p-3 rounded text-lg"
-              placeholder="예: 행안부 보도자료 보여줘"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-            />
-            <button
-              onClick={handleAsk}
-              disabled={loading}
-              className="bg-blue-600 text-white px-4 py-3 rounded hover:bg-blue-700 disabled:opacity-50"
-            >
-              {loading ? "불러오는 중..." : "질문하기"}
-            </button>
-          </div>
-          <div className="mt-6 whitespace-pre-line text-gray-800 text-sm bg-gray-100 p-4 rounded">
-            {answer}
-          </div>
-        </div>
-      );
-    };
-
-    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+      } catch (err) {
+        console.error(err);
+        responseArea.innerHTML = `<p class="text-red-500">서버 연결에 실패했습니다. (${err.message})</p>`;
+      }
+    }
   </script>
 </body>
 </html>
