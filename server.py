@@ -1,44 +1,55 @@
-# backend/server.py
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from crawler import crawl_government_data
-import openai
+import requests
+from bs4 import BeautifulSoup
 import os
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # 모든 도메인에서 접근 허용
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+@app.route('/')
+def index():
+    return "TVU 정부 크롤러 API가 실행 중입니다."
 
-@app.route("/chat", methods=["POST"])
-def chat():
-    data = request.get_json()
-    user_message = data.get("message")
+@app.route('/crawl', methods=['POST'])
+def crawl():
+    try:
+        data = request.get_json()
+        url = data.get('url')
 
-    if not user_message:
-        return jsonify({"error": "No message provided"}), 400
+        if not url:
+            return jsonify({'success': False, 'message': 'URL이 제공되지 않았습니다.'}), 400
 
-    crawled_items = crawl_government_data(user_message)
+        # HTML 크롤링 (예시: korea.kr 보도자료 페이지)
+        res = requests.get(url)
+        res.encoding = 'utf-8'
+        soup = BeautifulSoup(res.text, 'html.parser')
 
-    if not crawled_items:
-        return jsonify({"response": "관련된 정보를 찾지 못했습니다."})
+        results = []
 
-    prompt = "다음은 정부 지원금/공모사업 관련 정보입니다. 각 항목은 제목, 요약, 날짜, 링크를 포함하여 자연스럽게 설명해주세요:\n\n"
+        for li in soup.select('ul.list li'):
+            title_tag = li.select_one('.tit') or li.select_one('a')
+            date_tag = li.select_one('.date') or li.select_one('span.date')
 
-    for item in crawled_items:
-        prompt += f"- 제목: {item['title']}\n  내용: {item['desc']}\n  날짜: {item['date']}\n  링크: {item['link']}\n\n"
+            title = title_tag.text.strip() if title_tag else '제목 없음'
+            link = title_tag.get('href') if title_tag else '#'
+            if link and not link.startswith('http'):
+                link = f'https://www.korea.kr{link}'
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "너는 정부 정책 요약 챗봇이야."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.7
-    )
+            date = date_tag.text.strip() if date_tag else '날짜 없음'
 
-    answer = response.choices[0].message.content
-    return jsonify({"response": answer})
+            results.append({
+                '제목': title,
+                '링크': link,
+                '날짜': date
+            })
 
-if __name__ == "__main__":
-    app.run(debug=True)
+        return jsonify({'success': True, 'data': results})
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'서버 오류: {str(e)}'}), 500
+
+
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 10000))  # Render가 자동 지정한 포트 사용
+    app.run(host='0.0.0.0', port=port)
